@@ -1,3 +1,5 @@
+import logging
+
 import dash
 from dash import html, dcc, callback, Input, Output
 from plotly import graph_objects as go
@@ -5,6 +7,9 @@ from urllib.parse import unquote_plus, parse_qs
 import pandas as pd
 
 from app.services.data_loader import DataLoader
+
+# Настройка логирования безопасности
+security_logger = logging.getLogger("security")
 
 
 dash.register_page(__name__)
@@ -53,6 +58,10 @@ def update_page(search):  # noqa: ARG001
     # Валидация входных данных: ограничение длины для защиты от DoS
     MAX_REGION_NAME_LENGTH = 200
     if len(region_input) > MAX_REGION_NAME_LENGTH:
+        security_logger.warning(
+            "Попытка доступа с слишком длинным параметром region: длина %s символов",
+            len(region_input),
+        )
         return html.Div(
             [
                 html.H1("Ошибка валидации"),
@@ -71,6 +80,10 @@ def update_page(search):  # noqa: ARG001
     # Валидация: проверяем, что регион существует в whitelist
     # Это защищает от XSS и path traversal атак
     if region_input not in VALID_REGIONS:
+        security_logger.warning(
+            "Попытка доступа к несуществующему региону: '%s' (возможная XSS или path traversal атака)",
+            region_input,
+        )
         return html.Div(
             [
                 html.H1("Регион не найден"),

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -5,6 +6,12 @@ import geopandas as gpd
 import pandas as pd
 
 from app.models import GeoJSONFeature
+
+# Настройка логирования безопасности
+security_logger = logging.getLogger("security")
+
+# Максимальный размер файла: 100 МБ (в байтах)
+MAX_FILE_SIZE = 100 * 1024 * 1024
 
 
 def _convert_to_lists(obj: Any) -> Any:
@@ -27,7 +34,22 @@ def load_and_validate_geojson_file(path: Path) -> gpd.GeoDataFrame:
 
     Returns:
         GeoDataFrame с валидированными данными.
+
+    Raises:
+        ValueError: Если размер файла превышает максимально допустимый.
     """
+    # Валидация размера файла для защиты от DoS атак
+    file_size = path.stat().st_size
+    if file_size > MAX_FILE_SIZE:
+        security_logger.warning(
+            "Попытка загрузки файла превышающего максимальный размер: %s, размер: %s байт",
+            path,
+            file_size,
+        )
+        raise ValueError(
+            f"Размер файла {file_size} байт превышает максимально допустимый {MAX_FILE_SIZE} байт",
+        )
+
     # GeoPandas читает файл сразу как GeoDataFrame; чтобы валидировать
     # структуру, читаем его сырым JSON и пропускаем через Pydantic‑модель.
     raw = gpd.read_file(path)
@@ -105,12 +127,12 @@ class GeoJSONLoader:
                 f"В каталоге {self.regions_dir} не найдено ни одного .geojson файла",
             )
 
-        json_df = pd.concat(gdf_data, ignore_index=True)
-        json_df = gpd.GeoDataFrame(json_df)
+        # Объединяем GeoDataFrames напрямую через geopandas
+        json_df = gpd.GeoDataFrame(pd.concat(gdf_data, ignore_index=True))
         json_df.dropna(inplace=True, axis=1)
 
         # Удаляем возможные дубликаты по названию региона, чтобы в результирующем
         # GeoDataFrame имена были уникальны
-        json_df = json_df.drop_duplicates(subset="name")
+        json_df = gpd.GeoDataFrame(json_df.drop_duplicates(subset="name"))
 
         return json_df
