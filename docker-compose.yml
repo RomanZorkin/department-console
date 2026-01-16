@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  dashbord:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dashbord-app
+    env_file:
+      - .env  # Опционально: создайте .env файл для настройки переменных окружения
+    ports:
+      - "${UVICORN_PORT:-8000}:8000"
+    environment:
+      - UVICORN_HOST=0.0.0.0
+      - UVICORN_PORT=8000
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-1}
+      - UVICORN_RELOAD=${UVICORN_RELOAD:-false}
+    volumes:
+      # Монтирование данных для возможности обновления без пересборки
+      - ./app/data:/app/app/data:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dashbord-network
+
+networks:
+  dashbord-network:
+    driver: bridge
