@@ -57,7 +57,11 @@ def update_page(search):  # noqa: ARG001
             [
                 html.H1("Ошибка валидации"),
                 html.P("Недопустимый параметр региона"),
-                html.A("← На главную", href="/"),
+                html.A(
+                    "← На главную",
+                    href="/",
+                    style={"color": "blue", "textDecoration": "underline"},
+                ),
             ]
         )
 
@@ -71,7 +75,11 @@ def update_page(search):  # noqa: ARG001
             [
                 html.H1("Регион не найден"),
                 html.P("Указанный регион не найден в базе данных"),
-                html.A("← На главную", href="/"),
+                html.A(
+                    "← На главную",
+                    href="/",
+                    style={"color": "blue", "textDecoration": "underline"},
+                ),
             ]
         )
 
@@ -89,7 +97,11 @@ def update_page(search):  # noqa: ARG001
             [
                 html.H1("Регион не найден"),
                 html.P("Регион не найден в базе данных"),
-                html.A("← На главную", href="/"),
+                html.A(
+                    "← На главную",
+                    href="/",
+                    style={"color": "blue", "textDecoration": "underline"},
+                ),
             ]
         )
 
