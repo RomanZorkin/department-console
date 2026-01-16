@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "asgiref>=3.8.0",
     "dash>=3.3.0",
     "fiona>=1.10.1",
     "folium>=0.20.0",
@@ -15,6 +16,7 @@ dependencies = [
     "pydeck>=0.9.1",
     "python-dotenv[dash]>=1.2.1",
     "streamlit-folium>=0.25.3",
+    "uvicorn[standard]>=0.32.0",
 ]
 
 [dependency-groups]

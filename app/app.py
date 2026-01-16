@@ -1,5 +1,6 @@
 import dash
 from dash import Dash, html, dcc
+from asgiref.wsgi import WsgiToAsgi
 
 app = Dash(
     __name__,
@@ -25,5 +26,16 @@ app.layout = html.Div(
     ]
 )
 
+# ASGI приложение для uvicorn
+asgi_app = WsgiToAsgi(app.server)
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    import uvicorn
+    from app.config import UVICORN_HOST, UVICORN_PORT, UVICORN_RELOAD
+
+    uvicorn.run(
+        asgi_app,
+        host=UVICORN_HOST,
+        port=UVICORN_PORT,
+        reload=UVICORN_RELOAD,
+    )

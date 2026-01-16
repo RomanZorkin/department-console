@@ -143,24 +143,64 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e .  # установка из pyproject.toml
 ```
 
-### 3. Запуск Dash-приложения
+### 3. Запуск Dash-приложения через uvicorn
 
-Как правило, используется модуль [`app/app.py`](app/app.py) с объявлением `server` или `app`.
+Приложение настроено для работы с **uvicorn** ASGI сервером. Это обеспечивает лучшую производительность и возможность масштабирования.
 
-Примеры команд (конкретная команда может отличаться, см. `pyproject.toml`):
+#### Вариант 1: Запуск через модуль app.py (рекомендуется)
 
 ```bash
-# Вариант 1: через uv
+# через uv
 uv run python -m app.app
 
-# Вариант 2: обычный запуск python
+# либо напрямую
 python -m app.app
-
-# либо
-python app/app.py
 ```
 
-После запуска приложение будет доступно по адресу, указанному в логах (обычно http://127.0.0.1:8050/ или порт из `.env`).
+#### Вариант 2: Запуск через uvicorn напрямую
+
+```bash
+# через uv
+uv run uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000
+
+# либо напрямую
+uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000
+```
+
+#### Настройка через переменные окружения
+
+Вы можете настроить параметры сервера через переменные окружения (создайте файл `.env` в корне проекта):
+
+```bash
+UVICORN_HOST=0.0.0.0
+UVICORN_PORT=8000
+UVICORN_WORKERS=1
+UVICORN_RELOAD=false
+```
+
+Или установите их перед запуском:
+
+```bash
+export UVICORN_HOST=0.0.0.0
+export UVICORN_PORT=8000
+uv run python -m app.app
+```
+
+#### Дополнительные опции uvicorn
+
+Для production окружения рекомендуется использовать несколько workers:
+
+```bash
+uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+Для разработки с автоматической перезагрузкой:
+
+```bash
+uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000 --reload
+```
+
+После запуска приложение будет доступно по адресу, указанному в логах (по умолчанию http://0.0.0.0:8000/ или http://127.0.0.1:8000/).
 
 
 ## Тестирование
