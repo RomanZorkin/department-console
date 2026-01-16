@@ -68,10 +68,33 @@ def update_page(search, pathname):  # noqa: ARG001
     centroid_y = row.geometry.centroid.y
     centroid_x = row.geometry.centroid.x
 
-    # Получаем данные для столбчатой диаграммы
+    # Получаем данные для столбчатой диаграммы (в процентах)
     staffing = row.get("staffing", 0) * 100 if pd.notna(row.get("staffing")) else 0
     cash_use = row.get("cash_use", 0) * 100 if pd.notna(row.get("cash_use")) else 0
     serviceability = row.get("serviceability", 0) * 100 if pd.notna(row.get("serviceability")) else 0
+
+    # Функция для определения цвета по тем же правилам, что и в home.py
+    # Границы: менее 0.7 (70%) - красный, 0.7-0.85 (70-85%) - желтый, 0.85-1 (85-100%) - зеленый
+    def get_color(value_normalized):
+        """Определяет цвет на основе нормализованного значения (0-1)."""
+        if value_normalized < 0.7:
+            return "red"
+        elif value_normalized < 0.85:
+            return "yellow"
+        else:
+            return "green"
+
+    # Нормализуем значения для определения цвета (из процентов обратно в 0-1)
+    staffing_norm = staffing / 100
+    cash_use_norm = cash_use / 100
+    serviceability_norm = serviceability / 100
+
+    # Определяем цвета для каждого столбца
+    colors = [
+        get_color(staffing_norm),
+        get_color(cash_use_norm),
+        get_color(serviceability_norm),
+    ]
 
     # Создаем столбчатую диаграмму
     fig = go.Figure(
@@ -79,7 +102,7 @@ def update_page(search, pathname):  # noqa: ARG001
             go.Bar(
                 x=["Укомплектованность", "Освоение ДС", "Исправность техники"],
                 y=[staffing, cash_use, serviceability],
-                marker_color=["#1f77b4", "#ff7f0e", "#2ca02c"],
+                marker_color=colors,
                 text=[f"{staffing:.1f}%", f"{cash_use:.1f}%", f"{serviceability:.1f}%"],
                 textposition="outside",
             )
