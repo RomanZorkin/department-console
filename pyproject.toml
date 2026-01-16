@@ -23,7 +23,6 @@ dev = [
     "jupyter>=1.1.1",
     "mypy>=1.19.1",
     "pytest>=8.4.2",
-    "ruff>=0.14.10",
     "wemake-python-styleguide>=0.19.2",
 ]
 

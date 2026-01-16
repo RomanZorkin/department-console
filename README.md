@@ -28,8 +28,7 @@
    - В файле [`app/app.py`](app/app.py) создаётся объект `Dash` и включается поддержка страниц (Dash Pages).
    - Страницы описаны в модулях каталога [`app/pages`](app/pages):
      - [`app/pages/home.py`](app/pages/home.py) — главная страница с интерактивной картой России;
-     - [`app/pages/region.py`](app/pages/region.py) — страница с деталями по конкретному региону;
-     - [`app/pages/archive.py`](app/pages/archive.py) — архив/дополнительная страница.
+     - [`app/pages/region.py`](app/pages/region.py) — страница с деталями по конкретному региону.
    - Callbacks определены непосредственно в модулях страниц.
 
 2. **Модели данных**
@@ -101,8 +100,7 @@
 │   ├── pages/
 │   │   ├── __init__.py
 │   │   ├── home.py                  # Главная страница с картой России
-│   │   ├── region.py                # Страница деталей региона
-│   │   └── archive.py                # Архивная страница
+│   │   └── region.py                # Страница деталей региона
 │   └── services/
 │       ├── __init__.py
 │       ├── csv_loader.py            # Загрузчик CSV с валидацией
@@ -142,7 +140,7 @@ uv sync
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt  # если такой файл имеется или pip install .
+pip install -e .  # установка из pyproject.toml
 ```
 
 ### 3. Запуск Dash-приложения
