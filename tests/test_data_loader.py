@@ -10,7 +10,7 @@ def test_create_gdf_returns_geodataframe():
 
 def test_create_gdf_has_required_columns():
     gdf = create_gdf(regions_path)
-    for col in ["name", "geometry", "value", "population", "area", "gdp"]:
+    for col in ("name", "geometry", "value", "population", "area", "gdp"):
         assert col in gdf.columns
 
 

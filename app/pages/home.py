@@ -1,7 +1,7 @@
 import dash
 from dash import dcc, html, Input, Output, callback
-import plotly.graph_objects as go
-import urllib.parse
+from plotly import graph_objects as go
+from urllib.parse import quote
 from services.data_loader import load_data
 
 
@@ -63,7 +63,7 @@ def update_map(year, clickData):
         gdf_without_data = gdf_filtered[gdf_filtered["value"].isna()]
     else:
         # Если аналитических данных нет вообще — считаем, что данных нет ни у одного региона
-        gdf_with_data = gdf_filtered.iloc[0:0]
+        gdf_with_data = gdf_filtered.iloc[:0]
         gdf_without_data = gdf_filtered
 
     geojson_all = gdf_filtered.__geo_interface__
@@ -79,7 +79,7 @@ def update_map(year, clickData):
                 z=(
                     gdf_with_data["value"]
                     if "value" in gdf_with_data.columns
-                    else [1] * len(gdf_with_data)
+                    else [1 for _ in range(len(gdf_with_data))]
                 ),
                 text=gdf_with_data["name"],
                 colorscale="RdYlGn",
@@ -99,7 +99,7 @@ def update_map(year, clickData):
             go.Choroplethmapbox(
                 geojson=geojson_all,
                 locations=gdf_without_data.index,
-                z=[0] * len(gdf_without_data),
+                z=[0 for _ in range(len(gdf_without_data))],
                 text=gdf_without_data["name"],
                 # полностью прозрачная палитра
                 colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
@@ -107,7 +107,7 @@ def update_map(year, clickData):
                 hovertemplate=(
                     "<b>%{text}</b><br>Нет данных<br><extra></extra>"
                 ),
-                marker_opacity=0.0,  # нет заливки
+                marker_opacity=0,  # нет заливки
                 marker_line_width=0.5,
                 marker_line_color="gray",
             ),
@@ -127,7 +127,7 @@ def update_map(year, clickData):
         # В clickData для choroplethmapbox индекс региона содержится в поле "location"
         region_idx = clickData["points"][0]["location"]
         region_name = gdf.loc[region_idx]["name"]
-        region_encoded = urllib.parse.quote(region_name)
+        region_encoded = quote(region_name)
         href = f"/region?region={region_encoded}"
 
     return fig, href

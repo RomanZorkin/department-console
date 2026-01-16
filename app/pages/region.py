@@ -1,6 +1,6 @@
 import dash
 from dash import html, dcc, callback, Input, Output
-import plotly.graph_objects as go
+from plotly import graph_objects as go
 from urllib.parse import unquote_plus, parse_qs
 
 from services.data_loader import load_data
@@ -64,6 +64,8 @@ def update_page(search, pathname):
         )
 
     row = region_data.iloc[0]
+    centroid_y = row.geometry.centroid.y
+    centroid_x = row.geometry.centroid.x
 
     # Создаем карту
     fig = go.Figure(
@@ -81,8 +83,8 @@ def update_page(search, pathname):
         mapbox_style="open-street-map",
         mapbox_zoom=5,  # Чуть увеличим масштаб
         mapbox_center={
-            "lat": row.geometry.centroid.y,
-            "lon": row.geometry.centroid.x,
+            "lat": centroid_y,
+            "lon": centroid_x,
         },
         margin=dict(l=0, r=0, t=0, b=0),
     )
@@ -95,7 +97,7 @@ def update_page(search, pathname):
                     html.P(f"📍 Название: {region}"),
                     html.P(f"📈 Значение: {row.get('value', 'Н/Д')}"),
                     html.P(
-                        f"🌍 Координаты: {row.geometry.centroid.y:.4f}, {row.geometry.centroid.x:.4f}"
+                        f"🌍 Координаты: {centroid_y:.4f}, {centroid_x:.4f}"
                     ),
                 ],
                 style={
