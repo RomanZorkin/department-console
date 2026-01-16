@@ -127,16 +127,16 @@ def update_page(search):  # noqa: ARG001
     cash_use = row.get("cash_use", 0) * 100 if pd.notna(row.get("cash_use")) else 0
     serviceability = row.get("serviceability", 0) * 100 if pd.notna(row.get("serviceability")) else 0
 
-    # Функция для определения цвета по тем же правилам, что и в home.py
+    # Функция для определения современного цвета по тем же правилам, что и в home.py
     # Границы: менее 0.7 (70%) - красный, 0.7-0.85 (70-85%) - желтый, 0.85-1 (85-100%) - зеленый
     def get_color(value_normalized):
-        """Определяет цвет на основе нормализованного значения (0-1)."""
+        """Определяет современный цвет на основе нормализованного значения (0-1)."""
         if value_normalized < 0.7:  # noqa: WPS459 Сравнение с float необходимо для пороговых значений метрик
-            return "red"
+            return "#ef4444"  # Современный красный
         elif value_normalized < 0.85:  # noqa: WPS459 Сравнение с float необходимо для пороговых значений метрик
-            return "yellow"
+            return "#f59e0b"  # Современный оранжевый/янтарный
         else:
-            return "green"
+            return "#10b981"  # Современный зеленый
 
     # Нормализуем значения для определения цвета (из процентов обратно в 0-1)
     staffing_norm = staffing / 100
@@ -150,26 +150,84 @@ def update_page(search):  # noqa: ARG001
         get_color(serviceability_norm),
     ]
 
-    # Создаем столбчатую диаграмму
+    # Создаем современную столбчатую диаграмму
     fig = go.Figure(
         data=[
             go.Bar(
                 x=["Укомплектованность", "Освоение ДС", "Исправность техники"],
                 y=[staffing, cash_use, serviceability],
-                marker_color=colors,
+                marker=dict(
+                    color=colors,
+                    line=dict(
+                        color=[c for c in colors],
+                        width=2.5,
+                    ),
+                    opacity=0.9,
+                ),
                 text=[f"{staffing:.1f}%", f"{cash_use:.1f}%", f"{serviceability:.1f}%"],
                 textposition="outside",
+                textfont=dict(
+                    size=14,
+                    color="#1f2937",
+                    family="Arial, sans-serif",
+                    weight="bold",
+                ),
+                hovertemplate="<b>%{x}</b><br>" + "Значение: %{y:.1f}%<extra></extra>",
+                hoverlabel=dict(
+                    bgcolor="white",
+                    bordercolor="#e5e7eb",
+                    font_size=13,
+                    font_family="Arial, sans-serif",
+                ),
             )
         ]
     )
 
+    # Современный стильный layout
     fig.update_layout(
-        title="Показатели региона",
-        xaxis_title="Показатель",
-        yaxis_title="Процент (%)",
-        yaxis=dict(range=[0, 100]),
-        margin=dict(l=20, r=20, t=50, b=20),
-        height=400,
+        title=dict(
+            text="📊 Показатели региона",
+            font=dict(
+                size=24,
+                color="#111827",
+                family="Arial, sans-serif",
+                weight="bold",
+            ),
+            x=0.5,
+            xanchor="center",
+            pad=dict(t=20, b=30),
+        ),
+        xaxis=dict(
+            title=dict(
+                text="Показатель",
+                font=dict(size=14, color="#6b7280", family="Arial, sans-serif"),
+            ),
+            tickfont=dict(size=12, color="#4b5563", family="Arial, sans-serif"),
+            gridcolor="#e5e7eb",
+            gridwidth=1,
+            showline=True,
+            linecolor="#d1d5db",
+            linewidth=1,
+        ),
+        yaxis=dict(
+            title=dict(
+                text="Процент (%)",
+                font=dict(size=14, color="#6b7280", family="Arial, sans-serif"),
+            ),
+            tickfont=dict(size=12, color="#4b5563", family="Arial, sans-serif"),
+            range=[0, 100],
+            gridcolor="#e5e7eb",
+            gridwidth=1,
+            showline=True,
+            linecolor="#d1d5db",
+            linewidth=1,
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(l=60, r=40, t=80, b=60),
+        height=450,
+        showlegend=False,
+        hovermode="closest",
     )
 
     return html.Div(
@@ -196,11 +254,26 @@ def update_page(search):  # noqa: ARG001
                 id="region-chart",
                 figure=fig,
                 style={
-                    "height": "500px",
+                    "height": "550px",
                     "width": "100%",
-                    "border": "1px solid #ddd",
-                    "borderRadius": "10px",
+                    "border": "none",
+                    "borderRadius": "16px",
                     "marginTop": "20px",
+                    "boxShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                    "backgroundColor": "white",
+                    "padding": "20px",
+                },
+                config={
+                    "displayModeBar": True,
+                    "displaylogo": False,
+                    "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+                    "toImageButtonOptions": {
+                        "format": "png",
+                        "filename": f"dashboard_{region}",
+                        "height": 600,
+                        "width": 1200,
+                        "scale": 2,
+                    },
                 },
             ),
             html.Div(

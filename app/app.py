@@ -20,12 +20,15 @@ def set_security_headers(response):
     # Strict Transport Security (для HTTPS)
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     # Content Security Policy
+    # Разрешаем доступ к ресурсам для карт (Mapbox, OpenStreetMap, Plotly)
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data: https:; "
-        "font-src 'self' data:;"
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly https://api.mapbox.com; "
+        "style-src 'self' 'unsafe-inline' https://api.mapbox.com; "
+        "img-src 'self' data: https: https://*.tile.openstreetmap.org https://api.mapbox.com; "
+        "font-src 'self' data: https://cdn.plot.ly; "
+        "connect-src 'self' https://api.mapbox.com https://*.tile.openstreetmap.org https://cdn.plot.ly; "
+        "worker-src 'self' blob:;"
     )
     # Referrer Policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -52,8 +55,24 @@ app.layout = html.Div(
             ]
         ),
         dcc.Location(id="url", refresh=False),
+        html.Div(id="redirect-url", style={"display": "none"}),  # Глобальный компонент для навигации
         dash.page_container,
     ]
+)
+
+# Клиентский callback для навигации при клике на карту
+app.clientside_callback(
+    """
+    function(url) {
+        if (url && url !== "") {
+            window.location.href = url;
+        }
+        return window.location.pathname;
+    }
+    """,
+    dash.dependencies.Output("url", "pathname"),
+    dash.dependencies.Input("redirect-url", "children"),
+    prevent_initial_call=True,
 )
 
 # ASGI приложение для uvicorn

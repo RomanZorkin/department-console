@@ -1,5 +1,3 @@
-from typing import Any
-
 import dash
 from dash import dcc, html, Input, Output, callback
 from plotly import graph_objects as go
@@ -15,7 +13,6 @@ gdf = DataLoader().gdf
 # Layout страницы
 layout = html.Div(
     [
-        dcc.Location(id="url", refresh=True),
         html.H1("Карта России", style={"textAlign": "center"}),
         dcc.Graph(id="choropleth", style={"height": "70vh"}),
     ]
@@ -25,8 +22,9 @@ layout = html.Div(
 # Callback для обновления карты
 @callback(
     Output("choropleth", "figure"),
-    Output("url", "href"),
+    Output("redirect-url", "children"),
     Input("choropleth", "clickData"),
+    prevent_initial_call=False,  # Выполняем при первой загрузке
 )
 def update_map(clickData):
     """Обновить карту.
@@ -118,12 +116,12 @@ def update_map(clickData):
         height=600,
     )
 
-    href: Any = dash.no_update
+    redirect_url = ""
     if clickData:
         # В clickData для choroplethmapbox индекс региона содержится в поле "location"
         region_idx = clickData["points"][0]["location"]
         region_name = gdf.loc[region_idx]["name"]
         region_encoded = quote(region_name)
-        href = f"/region?region={region_encoded}"
+        redirect_url = f"/region?region={region_encoded}"
 
-    return fig, href
+    return fig, redirect_url
