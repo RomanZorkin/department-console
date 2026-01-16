@@ -13,7 +13,7 @@
 Приложение предназначено как учебный и демонстрационный пример архитектуры Dash‑проекта с:
 - разбиением на страницы;
 - отдельным слоем загрузки и подготовки данных (`data_loader`);
-- базовыми автотестами и линтингом (ruff, mypy, pytest).
+- базовыми автотестами и линтингом (flake8, wemake-python-styleguide, mypy, pytest).
 
 
 ## Архитектура
@@ -26,88 +26,93 @@
 
 1. **Dash + Dash Pages**
    - В файле [`app/app.py`](app/app.py) создаётся объект `Dash` и включается поддержка страниц (Dash Pages).
-   - Страницы описаны в модулях каталога [`app/pages`](app/pages), например:
-     - [`app/pages/home.py`](app/pages/home.py) — главная/домашняя страница;
-     - [`app/pages/main_page.py`](app/pages/main_page.py) — основная страница дашборда;
-     - [`app/pages/region_page.py`](app/pages/region_page.py) и [`app/pages/region.py`](app/pages/region.py) — страницы с деталями по конкретному региону;
+   - Страницы описаны в модулях каталога [`app/pages`](app/pages):
+     - [`app/pages/home.py`](app/pages/home.py) — главная страница с интерактивной картой России;
+     - [`app/pages/region.py`](app/pages/region.py) — страница с деталями по конкретному региону;
      - [`app/pages/archive.py`](app/pages/archive.py) — архив/дополнительная страница.
+   - Callbacks определены непосредственно в модулях страниц.
 
-2. **Layout и callbacks**
-   - [`app/layout.py`](app/layout.py) — определение общего layout приложения (общий каркас страниц, шапка/навигация и т.п.).
-   - [`app/callbacks`](app/callbacks) — набор модулей с callback‑функциями Dash, которые связывают компоненты интерфейса и данные:
-     - [`app/callbacks/main_callbacks.py`](app/callbacks/main_callbacks.py) — callbacks для главной/основной страницы (например, обновление карт и графиков при выборе параметров);
-     - [`app/callbacks/region_callbacks.py`](app/callbacks/region_callbacks.py) — callbacks для страниц регионов.
+2. **Модели данных**
 
-3. **Слой данных (data_loader)**
+   - [`app/models.py`](app/models.py) — Pydantic модели для валидации данных:
+     - `AnalyticRecord` — модель для аналитических данных из CSV;
+     - `OrganizationRecord` — модель для данных об организациях из CSV;
+     - `GeoJSONFeature`, `GeoJSONFeatureCollection` — модели для валидации GeoJSON данных.
+
+3. **Сервисный слой**
 
    Сервисный слой инкапсулирует логику загрузки и подготовки данных:
 
-   - [`app/services/data_loader.py`](app/services/data_loader.py) — функции для:
-     - чтения аналитических данных из `app/data/analytic/data.csv`;
-     - загрузки геометрии регионов из GeoJSON файлов в `app/data/regions` и `app/data/regions/config/`;
-     - сопоставления названий регионов и идентификаторов на карте по [`regions_names.json`](app/data/regions/config/regions_names.json);
-     - подготовки удобных для Dash структур (pandas DataFrame, dict с геометрией и т.п.).
+   - [`app/services/csv_loader.py`](app/services/csv_loader.py) — загрузчик CSV файлов с валидацией:
+     - `load_analytic_data()` — загрузка аналитических данных из `app/data/analytic/data.csv`;
+     - `load_organizations_data()` — загрузка данных об организациях из `app/data/analytic/organizations.csv` с расчетом метрик (staffing, cash_use, serviceability) и колонки `value` (минимум из трех метрик);
+     - `load_csv()` — универсальный метод для загрузки CSV с валидацией через Pydantic модели.
+
+   - [`app/services/geojson_loader.py`](app/services/geojson_loader.py) — загрузчик GeoJSON файлов:
+     - `load_and_validate_geojson_file()` — загрузка и валидация одного GeoJSON файла;
+     - `GeoJSONLoader` — класс для загрузки всех регионов из каталога.
+
+   - [`app/services/data_loader.py`](app/services/data_loader.py) — основной загрузчик данных:
+     - `DataLoader` — класс, объединяющий геоданные и данные организаций в единый GeoDataFrame;
+     - мерджит геометрию регионов (GeoJSON) с данными организаций по полю `region`;
+     - предоставляет готовый `gdf` (GeoDataFrame) для использования в визуализации.
 
    Такой подход позволяет отделить бизнес‑логику от представления и упростить тестирование.
 
 4. **Конфигурация**
 
    - [`app/config.py`](app/config.py) — конфигурационные параметры приложения (пути к данным, параметры запуска и т.п.).
-   - `.env.default` — пример файла окружения с переменными, которые могут использоваться при запуске (например, порт, режим DEBUG).
 
 5. **Данные**
 
-   - [`app/data/analytic`](app/data/analytic) — табличные аналитические данные (например, метрики по регионам) в CSV.
-   - [`app/data/regions`](app/data/regions) — геоданные по регионам в формате GeoJSON.
-   - [`app/data/regions/config`](app/data/regions/config) — конфигурационные GeoJSON и JSON для всего набора регионов России и сопоставления названий.
+   - [`app/data/analytic`](app/data/analytic) — табличные аналитические данные в CSV:
+     - `data.csv` — аналитические данные по регионам;
+     - `organizations.csv` — данные об организациях по регионам.
+   - [`app/data/regions`](app/data/regions) — геоданные по регионам в формате GeoJSON:
+     - отдельные файлы для каждого региона (например, `Adygeya.geojson`, `Moskva.geojson`);
+     - [`app/data/regions/config`](app/data/regions/config) — конфигурационные файлы (regions_names.json, russia_regions.geojson, Russia.geojson).
 
 6. **Тесты**
 
    - Каталог [`tests`](tests) содержит автоматические тесты:
-     - [`tests/test_data_loader.py`](tests/test_data_loader.py) — тесты для сервисов загрузки данных (проверка корректности чтения CSV/GeoJSON, сопоставления регионов и т.д.);
-     - [`tests/test_map_renderer.py`](tests/test_map_renderer.py) — тесты логики, отвечающей за отображение/подготовку карт (формирование структур для визуализации, корректность фильтрации по региону и пр.).
+     - [`tests/test_data_loader.py`](tests/test_data_loader.py) — тесты для сервисов загрузки данных (проверка корректности чтения CSV/GeoJSON, сопоставления регионов, валидации данных и т.д.).
 
 
 ## Структура проекта
 
-Основные элементы дерева проекта (неполный список):
+Основные элементы дерева проекта:
 
 ```text
 .
 ├── app/
 │   ├── app.py              # Точка входа Dash-приложения
-│   ├── app1.py             # Альтернативный/экспериментальный запуск (если используется)
 │   ├── config.py           # Конфигурация приложения
-│   ├── layout.py           # Общий layout приложения
-│   ├── callbacks/
-│   │   ├── __init__.py
-│   │   ├── main_callbacks.py
-│   │   └── region_callbacks.py
+│   ├── models.py           # Pydantic модели для валидации данных
 │   ├── data/
 │   │   ├── analytic/
-│   │   │   └── data.csv
+│   │   │   ├── data.csv              # Аналитические данные по регионам
+│   │   │   └── organizations.csv    # Данные об организациях
 │   │   └── regions/
-│   │       ├── *.geojson          # Геометрия отдельных регионов
+│   │       ├── *.geojson            # Геометрия отдельных регионов
 │   │       └── config/
 │   │           ├── regions_names.json
 │   │           ├── russia_regions.geojson
 │   │           └── Russia.geojson
 │   ├── pages/
 │   │   ├── __init__.py
-│   │   ├── home.py
-│   │   ├── main_page.py
-│   │   ├── region_page.py
-│   │   ├── region.py
-│   │   └── archive.py
+│   │   ├── home.py                  # Главная страница с картой России
+│   │   ├── region.py                # Страница деталей региона
+│   │   └── archive.py                # Архивная страница
 │   └── services/
 │       ├── __init__.py
-│       └── data_loader.py
+│       ├── csv_loader.py            # Загрузчик CSV с валидацией
+│       ├── geojson_loader.py        # Загрузчик GeoJSON файлов
+│       └── data_loader.py           # Основной загрузчик данных
 ├── tests/
 │   ├── __init__.py
-│   ├── test_data_loader.py
-│   └── test_map_renderer.py
-├── pyproject.toml          # Зависимости (uv/poetry/pip) и базовая конфигурация
-├── setup.cfg               # Настройки инструментов (ruff, mypy и др.)
+│   └── test_data_loader.py          # Тесты для сервисов загрузки данных
+├── pyproject.toml          # Зависимости (uv) и базовая конфигурация
+├── setup.cfg               # Настройки инструментов (flake8, mypy и др.)
 ├── uv.lock                 # Lock-файл зависимостей для uv
 └── README.md
 ```
@@ -140,16 +145,7 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt  # если такой файл имеется или pip install .
 ```
 
-### 3. Переменные окружения
-
-Скопируйте `.env.default` в `.env` и при необходимости измените значения:
-
-```bash
-cp .env.default .env
-# отредактируйте .env под свои нужды (порт, DEBUG и др.)
-```
-
-### 4. Запуск Dash-приложения
+### 3. Запуск Dash-приложения
 
 Как правило, используется модуль [`app/app.py`](app/app.py) с объявлением `server` или `app`.
 
@@ -188,44 +184,86 @@ pytest
 
 ## Линтинг и статический анализ
 
-В проекте используются как минимум:
-- **ruff** — быстрый линтер и автоформаттер Python‑кода;
+В проекте используются:
+- **flake8** — линтер Python‑кода с поддержкой wemake-python-styleguide;
+- **wemake-python-styleguide** — расширенный набор правил стиля кода (плагин для flake8);
 - **mypy** — статический анализ типов.
 
-Настройки находятся преимущественно в [`setup.cfg`](setup.cfg) и/или [`pyproject.toml`](pyproject.toml).
+Настройки находятся в [`setup.cfg`](setup.cfg) и [`pyproject.toml`](pyproject.toml).
 
-### Запуск ruff
+### Запуск flake8 (с wemake-python-styleguide)
+
+**wemake-python-styleguide** работает как плагин для flake8 и автоматически активируется при запуске flake8. Правила WPS проверяются вместе с базовыми правилами flake8.
 
 ```bash
 # через uv
-uv run ruff check .
+uv run flake8 app/
 
-# либо напрямую (если ruff установлен в окружении)
-ruff check .
+# либо напрямую (если flake8 установлен в окружении)
+flake8 app/
 ```
 
-При необходимости автоисправления можно использовать:
+Для проверки конкретных файлов:
 
 ```bash
-ruff check . --fix
+uv run flake8 app/services/data_loader.py app/pages/home.py
 ```
 
 ### Запуск mypy
 
 ```bash
 # через uv
-uv run mypy .
+uv run mypy app/
 
 # либо напрямую
-mypy .
+mypy app/
+```
+
+Для проверки конкретных файлов:
+
+```bash
+uv run mypy app/services/data_loader.py app/pages/home.py app/pages/region.py
 ```
 
 mypy проверит соответствие аннотаций типов фактическому коду согласно конфигурации в [`setup.cfg`](setup.cfg).
 
+### Запуск всех линтеров
+
+Для проверки всего проекта можно запустить все линтеры последовательно:
+
+```bash
+# flake8 (включает проверки wemake-python-styleguide)
+uv run flake8 app/
+
+# mypy
+uv run mypy app/
+```
+
+
+## Особенности реализации
+
+### Визуализация на карте
+
+На главной странице (`home.py`) реализована интерактивная карта России с кастомной палитрой цветов:
+- **Зеленый** (0.85-1.0) — высокие значения метрики `value`
+- **Желтый** (0.70-0.84) — средние значения
+- **Красный** (<0.7) — низкие значения
+
+Метрика `value` вычисляется как минимум из трех показателей организаций:
+- `staffing` — отношение фактического количества работников к штатному расписанию
+- `cash_use` — отношение фактически израсходованных средств к выделенным лимитам
+- `serviceability` — доля исправной техники
+
+### Валидация данных
+
+Все данные проходят валидацию через Pydantic модели:
+- CSV файлы валидируются при загрузке через `CSVLoader`
+- GeoJSON файлы валидируются через модели в `app/models.py`
+- Это обеспечивает типобезопасность и раннее обнаружение ошибок в данных
 
 ## Дополнительно
 
-- Файл [`hello.py`](hello.py) и ноутбук [`service.ipynb`](service.ipynb) могут использоваться как вспомогательные/экспериментальные файлы для отладки и прототипирования.
+- Ноутбук [`service.ipynb`](service.ipynb) может использоваться как вспомогательный файл для отладки и прототипирования.
 - `.gitignore` настроен для исключения виртуальных окружений, артефактов сборки и временных файлов.
 
-Такое разделение на страницы, сервисный слой данных, тесты и линтеры делает проект удобным для развития, экспериментов с визуализацией и обучения архитектуре Dash‑приложений.
+Такое разделение на страницы, сервисный слой данных, модели валидации, тесты и линтеры делает проект удобным для развития, экспериментов с визуализацией и обучения архитектуре Dash‑приложений.
