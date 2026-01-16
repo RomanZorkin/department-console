@@ -1,14 +1,16 @@
+from typing import Any
+
 import dash
 from dash import dcc, html, Input, Output, callback
 from plotly import graph_objects as go
 from urllib.parse import quote
-from services.data_loader import load_data
+from app.services.data_loader import DataLoader
 
 
 dash.register_page(__name__, path="/")
 
 # Загружаем данные один раз при запуске
-gdf = load_data()
+gdf = DataLoader().gdf
 
 # Layout страницы
 layout = html.Div(
@@ -72,6 +74,17 @@ def update_map(year, clickData):
 
     # Трейс для регионов с данными: полигон с полупрозрачной заливкой
     if not gdf_with_data.empty:
+        # Кастомная палитра с границами:
+        # 1-0.85 - зеленый, 0.84-0.70 - желтый, менее 0.7 - красный
+        custom_colorscale = [
+            [0, "red"],
+            [0.7, "red"],
+            [0.7, "yellow"],
+            [0.85, "yellow"],
+            [0.85, "green"],
+            [1, "green"],
+        ]
+
         fig.add_trace(
             go.Choroplethmapbox(
                 geojson=geojson_all,
@@ -82,7 +95,9 @@ def update_map(year, clickData):
                     else [1 for _ in range(len(gdf_with_data))]
                 ),
                 text=gdf_with_data["name"],
-                colorscale="RdYlGn",
+                colorscale=custom_colorscale,
+                zmin=0,
+                zmax=1,
                 colorbar_title="Значение",
                 hovertemplate=(
                     "<b>%{text}</b><br>Значение: %{z}<br><extra></extra>"
@@ -122,7 +137,7 @@ def update_map(year, clickData):
         height=600,
     )
 
-    href = dash.no_update
+    href: Any = dash.no_update
     if clickData:
         # В clickData для choroplethmapbox индекс региона содержится в поле "location"
         region_idx = clickData["points"][0]["location"]
