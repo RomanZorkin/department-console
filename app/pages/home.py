@@ -17,21 +17,6 @@ layout = html.Div(
     [
         dcc.Location(id="url", refresh=True),
         html.H1("Карта России", style={"textAlign": "center"}),
-        html.Div(
-            [
-                html.Label("Выберите год:", style={"marginRight": "10px"}),
-                dcc.Slider(
-                    id="year-slider",
-                    min=2000,
-                    max=2023,
-                    value=2023,
-                    marks={i: str(i) for i in range(2000, 2024, 5)},
-                    step=1,
-                    tooltip={"placement": "bottom", "always_visible": True},
-                ),
-            ],
-            style={"margin": "20px"},
-        ),
         dcc.Graph(id="choropleth", style={"height": "70vh"}),
     ]
 )
@@ -41,11 +26,10 @@ layout = html.Div(
 @callback(
     Output("choropleth", "figure"),
     Output("url", "href"),
-    Input("year-slider", "value"),
     Input("choropleth", "clickData"),
 )
-def update_map(year, clickData):
-    """Обновить карту по выбранному году.
+def update_map(clickData):
+    """Обновить карту.
 
     На карте:
     * показываются границы **всех** регионов;
@@ -53,11 +37,8 @@ def update_map(year, clickData):
     * регионы **без данных** отображаются только границами (без заливки).
     """
 
-    # Фильтруем по году, если столбец year присутствует
-    if "year" in gdf.columns and "value" in gdf.columns:
-        gdf_filtered = gdf[gdf["year"] == year]
-    else:
-        gdf_filtered = gdf
+    # Используем все данные без фильтрации по году
+    gdf_filtered = gdf
 
     # Разделяем регионы на с данными и без данных (по столбцу value)
     if "value" in gdf_filtered.columns:
