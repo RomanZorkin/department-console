@@ -453,6 +453,52 @@ docker inspect dashbord-app | grep -A 10 Health
 ```
 
 
+## Быстрый деплой на удаленный сервер
+
+Пошаговые команды для деплоя на удаленный сервер через SSH.
+
+### Подключение и подготовка
+
+```bash
+# 1. Подключение к серверу
+ssh user@your-server-ip
+
+# 2. Создание каталога проекта
+mkdir -p /opt/dashbord
+cd /opt/dashbord
+
+# 3. Клонирование репозитория
+git clone https://github.com/RomanZorkin/department-console.git .
+```
+
+### Запуск сервиса
+
+```bash
+# Сборка и запуск в фоновом режиме
+docker compose up -d --build
+
+# Проверка статуса
+docker compose ps
+
+# Просмотр логов
+docker compose logs -f
+```
+
+### Проверка работы
+
+```bash
+# Проверка доступности локально
+curl http://localhost:8000
+
+# Проверка статуса контейнера
+docker compose ps
+
+# Проверка логов на ошибки
+docker compose logs | tail -50
+```
+
+
+
 ## Тестирование
 
 Для тестов используется **pytest** с поддержкой асинхронных тестов через **pytest-asyncio**. Тесты лежат в каталоге [`tests`](tests).
