@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from typing import Any, List, Literal, Optional
 
-import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+# ============================================================================
+# CSV Data Models
+# ============================================================================
 
 
 class AnalyticRecord(BaseModel):
@@ -21,6 +25,53 @@ class AnalyticRecord(BaseModel):
     budget_millions: float
     population_change: float
     details: str
+
+
+class OrganizationRecord(BaseModel):
+    """Строка из CSV app/data/analytic/organizations.csv.
+
+    Ожидаемые поля соответствуют заголовку файла organizations.csv.
+    Валидирует правила:
+    - by_list <= by_staff
+    - cash_execution <= buget_limits
+    - faulty_equipment <= equipment
+    - Все значения от 0 до 100
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    city: str = Field(..., description="Город нахождения организации")
+    region: str = Field(..., description="Регион нахождения организации")
+    by_staff: int = Field(..., ge=0, le=100, description="Кол-во людей в штатном расписании")
+    by_list: int = Field(..., ge=0, le=100, description="Фактическое количество работников")
+    buget_limits: int = Field(..., ge=0, le=100, description="Выделенные лимиты расходов")
+    cash_execution: int = Field(..., ge=0, le=100, description="Фактически израсходовано")
+    equipment: int = Field(..., ge=0, le=100, description="Всего техники в наличии")
+    faulty_equipment: int = Field(..., ge=0, le=100, description="Сломанная техника")
+
+    @model_validator(mode="after")
+    def validate_dependencies(self) -> "OrganizationRecord":
+        """Проверка зависимостей между полями."""
+        if self.by_list > self.by_staff:
+            raise ValueError(
+                f"by_list ({self.by_list}) не может быть больше by_staff ({self.by_staff})"
+            )
+        if self.cash_execution > self.buget_limits:
+            raise ValueError(
+                f"cash_execution ({self.cash_execution}) не может быть больше "
+                f"buget_limits ({self.buget_limits})"
+            )
+        if self.faulty_equipment > self.equipment:
+            raise ValueError(
+                f"faulty_equipment ({self.faulty_equipment}) не может быть больше "
+                f"equipment ({self.equipment})"
+            )
+        return self
+
+
+# ============================================================================
+# GeoJSON Models
+# ============================================================================
 
 
 class GeoJSONGeometry(BaseModel):
@@ -86,30 +137,3 @@ class GeoJSONFeatureCollection(BaseModel):
     features: List[GeoJSONFeature]
 
 
-def validate_analytic_dataframe(df: pd.DataFrame) -> List[AnalyticRecord]:
-    """Провалидировать DataFrame с данными аналитики.
-
-    При первой ошибке структуры будет выброшен pydantic.ValidationError.
-    Возвращает список Pydantic‑моделей.
-    """
-
-    records: List[AnalyticRecord] = []
-
-    for _, row in df.iterrows():
-        data = row.to_dict()
-        record = AnalyticRecord.model_validate(data)
-        records.append(record)
-
-    return records
-
-
-def validate_geojson_feature(data: dict) -> GeoJSONFeature:
-    """Провалидировать одиночный GeoJSON Feature (как в Adygeya.geojson)."""
-
-    return GeoJSONFeature.model_validate(data)
-
-
-def validate_geojson_feature_collection(data: dict) -> GeoJSONFeatureCollection:
-    """Провалидировать GeoJSON FeatureCollection."""
-
-    return GeoJSONFeatureCollection.model_validate(data)

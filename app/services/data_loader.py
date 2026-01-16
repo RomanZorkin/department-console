@@ -6,7 +6,7 @@ import pandas as pd
 from pydantic import ValidationError
 
 from config import regions_path
-from models import validate_analytic_dataframe, validate_geojson_feature
+from models import AnalyticRecord, GeoJSONFeature
 
 
 def _convert_to_lists(obj: Any) -> Any:
@@ -59,7 +59,7 @@ def _load_and_validate_geojson_file(path: Path) -> gpd.GeoDataFrame:
     }
 
     # Pydantic проверит, что есть поля name, geometry и т.д.
-    validate_geojson_feature(feature_dict)
+    GeoJSONFeature.model_validate(feature_dict)
 
     # Если валидация успешна, возвращаем исходный GeoDataFrame для этого файла
     return raw
@@ -72,7 +72,7 @@ def _load_and_validate_analytic_data(path: Path) -> pd.DataFrame:
 
     try:
         # Возвращаем DataFrame, соответствующий списку валидных Pydantic‑моделей.
-        records = validate_analytic_dataframe(df)
+        records = [AnalyticRecord.model_validate(record) for record in df.to_dict("records")]
     except ValidationError as exc:
         raise ValidationError.from_exception_data(
             "AnalyticRecordDataFrame",
