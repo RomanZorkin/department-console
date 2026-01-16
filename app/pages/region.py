@@ -2,15 +2,16 @@ import dash
 from dash import html, dcc, callback, Input, Output
 from plotly import graph_objects as go
 from urllib.parse import unquote_plus, parse_qs
+import pandas as pd
 
-from services.data_loader import load_data
+from app.services.data_loader import DataLoader
 
 
 dash.register_page(__name__)
 # Загружаем данные один раз через сервисный слой, чтобы избежать циклических импортов
 # и избыточных зависимостей страницы от конфигурации путей
 # (regions_path используется только внутри сервиса данных).
-gdf = load_data()
+gdf = DataLoader().gdf
 
 # Layout страницы
 layout = html.Div(
@@ -26,7 +27,7 @@ layout = html.Div(
     Input("page-url", "search"),  # ✅ Используем наш компонент
     Input("page-url", "pathname"),
 )
-def update_page(search, pathname):
+def update_page(search, pathname):  # noqa: ARG001
     # Проверяем наличие query string
     if not search or "region=" not in search:
         return html.Div(
@@ -67,26 +68,31 @@ def update_page(search, pathname):
     centroid_y = row.geometry.centroid.y
     centroid_x = row.geometry.centroid.x
 
-    # Создаем карту
+    # Получаем данные для столбчатой диаграммы
+    staffing = row.get("staffing", 0) * 100 if pd.notna(row.get("staffing")) else 0
+    cash_use = row.get("cash_use", 0) * 100 if pd.notna(row.get("cash_use")) else 0
+    serviceability = row.get("serviceability", 0) * 100 if pd.notna(row.get("serviceability")) else 0
+
+    # Создаем столбчатую диаграмму
     fig = go.Figure(
-        go.Choroplethmapbox(
-            geojson=region_data.geometry.__geo_interface__,
-            locations=region_data.index,
-            z=[row["value"]],
-            colorscale="Viridis",  # Добавляем цвета
-            text=[region],  # Текст для подсказки
-            hovertemplate="<b>%{text}</b><br>Значение: %{z}<extra></extra>",
-        )
+        data=[
+            go.Bar(
+                x=["Укомплектованность", "Освоение ДС", "Исправность техники"],
+                y=[staffing, cash_use, serviceability],
+                marker_color=["#1f77b4", "#ff7f0e", "#2ca02c"],
+                text=[f"{staffing:.1f}%", f"{cash_use:.1f}%", f"{serviceability:.1f}%"],
+                textposition="outside",
+            )
+        ]
     )
 
     fig.update_layout(
-        mapbox_style="open-street-map",
-        mapbox_zoom=5,  # Чуть увеличим масштаб
-        mapbox_center={
-            "lat": centroid_y,
-            "lon": centroid_x,
-        },
-        margin=dict(l=0, r=0, t=0, b=0),
+        title="Показатели региона",
+        xaxis_title="Показатель",
+        yaxis_title="Процент (%)",
+        yaxis=dict(range=[0, 100]),
+        margin=dict(l=20, r=20, t=50, b=20),
+        height=400,
     )
 
     return html.Div(
@@ -94,8 +100,10 @@ def update_page(search, pathname):
             html.H1(f"📊 Дашборд региона: {region}"),
             html.Div(
                 [
-                    html.P(f"📍 Название: {region}"),
-                    html.P(f"📈 Значение: {row.get('value', 'Н/Д')}"),
+                    html.P(f"📍 Регион: {region}"),
+                    html.P(f"📈 Укомплектованность: {staffing:.1f} %"),
+                    html.P(f"📈 Освоение ДС: {cash_use:.1f} %"),
+                    html.P(f"📈 Исправность техники: {serviceability:.1f}%"),
                     html.P(
                         f"🌍 Координаты: {centroid_y:.4f}, {centroid_x:.4f}"
                     ),
@@ -108,13 +116,14 @@ def update_page(search, pathname):
                 },
             ),
             dcc.Graph(
-                id="region-map",
+                id="region-chart",
                 figure=fig,
                 style={
-                    "height": "70vh",
+                    "height": "500px",
                     "width": "100%",
                     "border": "1px solid #ddd",
                     "borderRadius": "10px",
+                    "marginTop": "20px",
                 },
             ),
             html.Div(
