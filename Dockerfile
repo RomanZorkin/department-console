@@ -15,8 +15,8 @@ ENV C_INCLUDE_PATH=/usr/include/gdal
 # Установка рабочей директории
 WORKDIR /app
 
-# Установка uv для управления зависимостями
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Установка uv для управления зависимостями через pip
+RUN pip install --no-cache-dir uv
 
 # Копирование файлов зависимостей
 COPY pyproject.toml uv.lock ./
