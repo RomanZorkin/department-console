@@ -77,9 +77,9 @@ def update_page(search, pathname):  # noqa: ARG001
     # Границы: менее 0.7 (70%) - красный, 0.7-0.85 (70-85%) - желтый, 0.85-1 (85-100%) - зеленый
     def get_color(value_normalized):
         """Определяет цвет на основе нормализованного значения (0-1)."""
-        if value_normalized < 0.7:
+        if value_normalized < 0.7:  # noqa: WPS459 Сравнение с float необходимо для пороговых значений метрик
             return "red"
-        elif value_normalized < 0.85:
+        elif value_normalized < 0.85:  # noqa: WPS459 Сравнение с float необходимо для пороговых значений метрик
             return "yellow"
         else:
             return "green"

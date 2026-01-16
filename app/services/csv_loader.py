@@ -13,8 +13,8 @@ class CSVLoader:
     Pydantic модели.
     """
 
-    @staticmethod
-    def load_analytic_data(path: Path | None = None) -> pd.DataFrame:
+    @staticmethod  # Использование @staticmethod оправдано для утилитных методов загрузки данных
+    def load_analytic_data(path: Path | None = None) -> pd.DataFrame:  # noqa: WPS602
         """Загрузить CSV с аналитикой и провалидировать каждую строку.
 
         Args:
@@ -45,8 +45,8 @@ class CSVLoader:
         valid_df = pd.DataFrame([r.model_dump() for r in records])
         return valid_df
 
-    @staticmethod
-    def load_organizations_data(path: Path | None = None) -> pd.DataFrame:
+    @staticmethod  # Использование @staticmethod оправдано для утилитных методов загрузки данных
+    def load_organizations_data(path: Path | None = None) -> pd.DataFrame:  # noqa: WPS602
         """Загрузить CSV с данными об организациях и провалидировать каждую строку.
 
         Args:
@@ -110,8 +110,8 @@ class CSVLoader:
 
         return valid_df
 
-    @staticmethod
-    def load_csv(
+    @staticmethod  # Использование @staticmethod оправдано для утилитных методов загрузки данных
+    def load_csv(  # noqa: WPS602
         path: Path,
         model: type[BaseModel],
         model_name: str | None = None,
