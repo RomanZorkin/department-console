@@ -27,6 +27,12 @@ COPY . .
 # Установка зависимостей (после копирования для лучшего кеширования)
 RUN uv sync --frozen --no-dev
 
+# Создание непривилегированного пользователя для запуска приложения
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Изменение владельца файлов приложения
+RUN chown -R appuser:appuser /app
+
 # Открытие порта
 EXPOSE 8000
 
@@ -36,6 +42,9 @@ ENV UVICORN_PORT=8000
 ENV UVICORN_WORKERS=1
 ENV UVICORN_RELOAD=false
 ENV PATH="/app/.venv/bin:$PATH"
+
+# Переключение на непривилегированного пользователя
+USER appuser
 
 # Запуск приложения
 CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", "8000"]

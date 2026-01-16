@@ -12,6 +12,8 @@ dash.register_page(__name__)
 # и избыточных зависимостей страницы от конфигурации путей
 # (regions_path используется только внутри сервиса данных).
 gdf = DataLoader().gdf
+# Создаем whitelist допустимых регионов для валидации входных данных
+VALID_REGIONS = set(gdf["name"].dropna().unique())
 
 # Layout страницы
 layout = html.Div(
@@ -25,9 +27,8 @@ layout = html.Div(
 @callback(
     Output("page-content", "children"),  # ✅ Указали куда выводить
     Input("page-url", "search"),  # ✅ Используем наш компонент
-    Input("page-url", "pathname"),
 )
-def update_page(search, pathname):  # noqa: ARG001
+def update_page(search):  # noqa: ARG001
     # Проверяем наличие query string
     if not search or "region=" not in search:
         return html.Div(
@@ -44,22 +45,50 @@ def update_page(search, pathname):  # noqa: ARG001
 
     # Извлекаем параметр region
     query_params = parse_qs(search.lstrip("?"))
-    region = query_params.get("region", [""])[0]
+    region_input = query_params.get("region", [""])[0]
 
-    if not region:
+    if not region_input:
         return html.Div("Не указан регион")
 
+    # Валидация входных данных: ограничение длины для защиты от DoS
+    MAX_REGION_NAME_LENGTH = 200
+    if len(region_input) > MAX_REGION_NAME_LENGTH:
+        return html.Div(
+            [
+                html.H1("Ошибка валидации"),
+                html.P("Недопустимый параметр региона"),
+                html.A("← На главную", href="/"),
+            ]
+        )
+
     # Декодируем имя региона
-    region = unquote_plus(region)
+    region_input = unquote_plus(region_input)
 
-    # Ищем данные региона
-    region_data = gdf[gdf["name"] == region]
+    # Валидация: проверяем, что регион существует в whitelist
+    # Это защищает от XSS и path traversal атак
+    if region_input not in VALID_REGIONS:
+        return html.Div(
+            [
+                html.H1("Регион не найден"),
+                html.P("Указанный регион не найден в базе данных"),
+                html.A("← На главную", href="/"),
+            ]
+        )
 
+    # Ищем данные региона (используем валидированное значение)
+    region_data = gdf[gdf["name"] == region_input]
+
+    # Безопасное имя региона из данных (не из пользовательского ввода)
+    # Это дополнительная защита от XSS
+    region = region_data.iloc[0]["name"] if not region_data.empty else region_input
+
+    # Эта проверка не должна сработать после валидации выше,
+    # но оставляем для дополнительной защиты
     if region_data.empty:
         return html.Div(
             [
                 html.H1("Регион не найден"),
-                html.P(f"Регион '{region}' не найден в базе данных"),
+                html.P("Регион не найден в базе данных"),
                 html.A("← На главную", href="/"),
             ]
         )

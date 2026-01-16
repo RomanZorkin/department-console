@@ -115,6 +115,7 @@ class CSVLoader:
         path: Path,
         model: type[BaseModel],
         model_name: str | None = None,
+        base_dir: Path | None = None,
     ) -> pd.DataFrame:
         """Универсальный метод для загрузки CSV с валидацией через Pydantic модель.
 
@@ -123,10 +124,26 @@ class CSVLoader:
             model: Pydantic модель для валидации записей.
             model_name: Имя модели для сообщений об ошибках.
                 Если не указано, используется имя класса модели.
+            base_dir: Базовая директория для проверки path traversal.
+                Если указана, путь должен находиться внутри этой директории.
 
         Returns:
             DataFrame с валидированными данными.
+
+        Raises:
+            ValueError: Если путь находится вне базовой директории (path traversal).
         """
+        # Защита от path traversal: проверяем, что путь находится в базовой директории
+        if base_dir is not None:
+            resolved_path = path.resolve()
+            resolved_base = base_dir.resolve()
+            try:
+                resolved_path.relative_to(resolved_base)
+            except ValueError:
+                raise ValueError(
+                    f"Путь {resolved_path} находится вне разрешенной директории {resolved_base}",
+                ) from None
+
         df = pd.read_csv(path)
 
         model_name = model_name or model.__name__
