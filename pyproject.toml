@@ -10,6 +10,7 @@ dependencies = [
     "fiona>=1.10.1",
     "folium>=0.20.0",
     "geopandas>=1.0.1",
+    "numpy<2.0",
     "pandas>=2.3.3",
     "plotly>=6.5.0",
     "pydantic>=2.12.5",
