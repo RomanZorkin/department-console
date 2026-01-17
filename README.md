@@ -1,5 +1,7 @@
 # Дашборд регионов России
 
+**🌐 Сервис доступен по адресу:** [http://185.252.146.250:8032](http://185.252.146.250:8032)
+
 ## Описание
 
 Этот проект — интерактивное веб‑приложение на базе фреймворка [Dash](https://dash.plotly.com/) для визуализации данных по регионам России.
@@ -461,24 +463,24 @@ docker inspect dashbord-app | grep -A 10 Health
 
 ```bash
 # 1. Подключение к серверу
-ssh user@your-server-ip
+ssh user@your-server-ip -p <port number>
 
 # 2. Создание каталога проекта
 mkdir -p /opt/dashbord
 cd /opt/dashbord
 
 # 3. Клонирование репозитория
-git clone https://github.com/RomanZorkin/department-console.git .
+git clone https://TOKEN@github.com/RomanZorkin/department-console.git .
 ```
 
 ### Запуск сервиса
 
 ```bash
 # Сборка и запуск в фоновом режиме
-docker compose up -d --build
+docker compose build
 
 # Проверка статуса
-docker compose ps
+docker compose up -d
 
 # Просмотр логов
 docker compose logs -f
