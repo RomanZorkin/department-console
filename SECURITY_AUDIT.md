@@ -71,7 +71,7 @@
 ```1:42:Dockerfile
 FROM python:3.11-slim
 ...
-CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", "8032"]
 ```
 
 **Риск:** При компрометации контейнера злоумышленник получает root права.

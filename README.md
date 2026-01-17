@@ -157,7 +157,7 @@ docker compose logs -f
 
 ```bash
 # Проверка доступности локально
-curl http://localhost:8000
+curl http://localhost:8032
 
 # Проверка статуса контейнера
 docker compose ps
@@ -212,10 +212,10 @@ python -m app.app
 
 ```bash
 # через uv
-uv run uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000
+uv run uvicorn app.app:asgi_app --host 0.0.0.0 --port 8032
 
 # либо напрямую
-uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000
+uvicorn app.app:asgi_app --host 0.0.0.0 --port 8032
 ```
 
 #### Настройка через переменные окружения
@@ -224,7 +224,7 @@ uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000
 
 ```bash
 UVICORN_HOST=0.0.0.0
-UVICORN_PORT=8000
+UVICORN_PORT=8032
 UVICORN_WORKERS=1
 UVICORN_RELOAD=false
 ```
@@ -233,7 +233,7 @@ UVICORN_RELOAD=false
 
 ```bash
 export UVICORN_HOST=0.0.0.0
-export UVICORN_PORT=8000
+export UVICORN_PORT=8032
 uv run python -m app.app
 ```
 
@@ -242,16 +242,16 @@ uv run python -m app.app
 Для production окружения рекомендуется использовать несколько workers:
 
 ```bash
-uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn app.app:asgi_app --host 0.0.0.0 --port 8032 --workers 4
 ```
 
 Для разработки с автоматической перезагрузкой:
 
 ```bash
-uvicorn app.app:asgi_app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.app:asgi_app --host 0.0.0.0 --port 8032 --reload
 ```
 
-После запуска приложение будет доступно по адресу, указанному в логах (по умолчанию http://0.0.0.0:8000/ или http://127.0.0.1:8000/).
+После запуска приложение будет доступно по адресу, указанному в логах (по умолчанию http://0.0.0.0:8032/ или http://127.0.0.1:8032/).
 
 
 ## Деплой через Docker
@@ -286,7 +286,7 @@ docker-compose up -d --build
 - Контейнер продолжает работать после закрытия терминала
 - Подходит для production окружения
 
-После запуска приложение будет доступно по адресу `http://localhost:8000`.
+После запуска приложение будет доступно по адресу `http://localhost:8032`.
 
 **2. Запуск с логами в реальном времени (онлайн режим) — для разработки и отладки**
 
@@ -345,7 +345,7 @@ docker-compose down -v
 ```bash
 # Настройки uvicorn сервера
 UVICORN_HOST=0.0.0.0
-UVICORN_PORT=8000
+UVICORN_PORT=8032
 UVICORN_WORKERS=1
 UVICORN_RELOAD=false
 ```
@@ -481,7 +481,7 @@ docker-compose ps
 
 Измените порт в `.env` файле:
 ```bash
-UVICORN_PORT=8080
+UVICORN_PORT=8032
 ```
 
 #### Проблемы с зависимостями
