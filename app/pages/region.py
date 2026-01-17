@@ -6,17 +6,16 @@ from plotly import graph_objects as go
 from urllib.parse import unquote_plus, parse_qs
 import pandas as pd
 
-from app.services.data_loader import DataLoader
+from app.app import get_data_cache
 
 # Настройка логирования безопасности
 security_logger = logging.getLogger("security")
 
 
 dash.register_page(__name__, name="Регион")
-# Загружаем данные один раз через сервисный слой, чтобы избежать циклических импортов
-# и избыточных зависимостей страницы от конфигурации путей
-# (regions_path используется только внутри сервиса данных).
-gdf = DataLoader().gdf
+# Используем кэшированные данные вместо загрузки при импорте
+# Это значительно ускоряет загрузку страницы
+gdf = get_data_cache().gdf
 # Создаем whitelist допустимых регионов для валидации входных данных
 VALID_REGIONS = set(gdf["name"].dropna().unique())
 

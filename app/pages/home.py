@@ -2,13 +2,25 @@ import dash
 from dash import dcc, html, Input, Output, callback
 from plotly import graph_objects as go
 from urllib.parse import quote
-from app.services.data_loader import DataLoader
+from app.app import get_data_cache
+
+# Кэш для GeoJSON интерфейса - вычисляется один раз
+_geojson_cache = None
+
+
+def get_geojson_interface():
+    """Получить кэшированный GeoJSON интерфейс."""
+    global _geojson_cache
+    if _geojson_cache is None:
+        gdf = get_data_cache().gdf
+        _geojson_cache = gdf.__geo_interface__
+    return _geojson_cache
 
 
 dash.register_page(__name__, path="/", name="Главная")
 
-# Загружаем данные один раз при запуске
-gdf = DataLoader().gdf
+# Используем кэшированные данные вместо загрузки при импорте
+gdf = get_data_cache().gdf
 
 # Layout страницы
 layout = html.Div(
@@ -47,7 +59,8 @@ def update_map(clickData):
         gdf_with_data = gdf_filtered.iloc[:0]
         gdf_without_data = gdf_filtered
 
-    geojson_all = gdf_filtered.__geo_interface__
+    # Используем кэшированный GeoJSON интерфейс для ускорения
+    geojson_all = get_geojson_interface()
 
     fig = go.Figure()
 

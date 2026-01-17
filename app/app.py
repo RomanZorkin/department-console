@@ -6,6 +6,20 @@ from flask import Flask, request, g
 # Создаем Flask приложение с настройками безопасности
 flask_app = Flask(__name__)
 
+# Глобальный кэш данных - загружаем один раз при старте приложения
+# Это значительно ускоряет загрузку страниц, так как данные не перезагружаются
+# при каждом импорте модулей страниц
+_data_cache = None
+
+
+def get_data_cache():
+    """Получить кэшированные данные. Загружает данные при первом вызове."""
+    global _data_cache
+    if _data_cache is None:
+        from app.services.data_loader import DataLoader
+        _data_cache = DataLoader()
+    return _data_cache
+
 # Настройка CORS: разрешаем только запросы с того же домена
 # Для production можно настроить конкретные домены
 
