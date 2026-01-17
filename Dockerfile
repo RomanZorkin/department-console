@@ -1,11 +1,14 @@
 FROM python:3.11-slim
 
-# Установка системных зависимостей для геопространственных библиотек
+# Установка системных зависимостей для геопространственных библиотек и компиляции NumPy
 RUN apt-get update && apt-get install -y \
     gdal-bin \
     libgdal-dev \
     g++ \
     curl \
+    gfortran \
+    libopenblas-dev \
+    liblapack-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка переменных окружения для GDAL
@@ -18,6 +21,9 @@ WORKDIR /app
 # Установка uv для управления зависимостями через pip
 RUN pip install --no-cache-dir uv
 
+# Переменные окружения для отключения оптимизаций NumPy (совместимость со старыми CPU)
+ENV NPY_DISABLE_OPTIMIZATION=1
+
 # Копирование файлов зависимостей
 COPY pyproject.toml uv.lock ./
 
@@ -25,7 +31,9 @@ COPY pyproject.toml uv.lock ./
 COPY . .
 
 # Установка зависимостей (после копирования для лучшего кеширования)
-RUN uv sync --frozen --no-dev
+# Устанавливаем NumPy из исходников без оптимизаций для совместимости со старыми CPU
+RUN uv sync --frozen --no-dev && \
+    uv pip install --force-reinstall --no-binary numpy numpy
 
 # Создание непривилегированного пользователя для запуска приложения
 RUN groupadd -r appuser && useradd -r -g appuser -m appuser
@@ -47,6 +55,7 @@ ENV UVICORN_WORKERS=1
 ENV UVICORN_RELOAD=false
 ENV PATH="/app/.venv/bin:$PATH"
 ENV UV_CACHE_DIR=/app/.cache/uv
+ENV NPY_DISABLE_OPTIMIZATION=1
 
 # Переключение на непривилегированного пользователя
 USER appuser
