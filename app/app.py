@@ -43,7 +43,7 @@ app = Dash(
 
 app.layout = html.Div(
     [
-        html.H1("Multi-page app with Dash Pages"),
+        html.H1("Многстраничное приложение с Dash Pages"),
         html.Div(
             [
                 html.Div(

@@ -5,7 +5,7 @@ from urllib.parse import quote
 from app.services.data_loader import DataLoader
 
 
-dash.register_page(__name__, path="/")
+dash.register_page(__name__, path="/", name="Главная")
 
 # Загружаем данные один раз при запуске
 gdf = DataLoader().gdf

@@ -39,11 +39,11 @@ RUN mkdir -p /home/appuser/.cache/uv /app/.cache/uv && \
 RUN chown -R appuser:appuser /app
 
 # Открытие порта
-EXPOSE 8000
+EXPOSE 8032
 
 # Переменные окружения по умолчанию
 ENV UVICORN_HOST=0.0.0.0
-ENV UVICORN_PORT=8000
+ENV UVICORN_PORT=8032
 ENV UVICORN_WORKERS=1
 ENV UVICORN_RELOAD=false
 ENV PATH="/app/.venv/bin:$PATH"
@@ -53,4 +53,4 @@ ENV UV_CACHE_DIR=/app/.cache/uv
 USER appuser
 
 # Запуск приложения
-CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", "8032"]

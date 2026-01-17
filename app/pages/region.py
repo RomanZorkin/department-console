@@ -12,7 +12,7 @@ from app.services.data_loader import DataLoader
 security_logger = logging.getLogger("security")
 
 
-dash.register_page(__name__)
+dash.register_page(__name__, name="Регион")
 # Загружаем данные один раз через сервисный слой, чтобы избежать циклических импортов
 # и избыточных зависимостей страницы от конфигурации путей
 # (regions_path используется только внутри сервиса данных).
