@@ -1,16 +1,33 @@
 import dash
 from dash import Dash, html, dcc
 from asgiref.wsgi import WsgiToAsgi
-from flask import Flask
+from flask import Flask, request, g
 
 # Создаем Flask приложение с настройками безопасности
 flask_app = Flask(__name__)
 
 # Настройка CORS: разрешаем только запросы с того же домена
 # Для production можно настроить конкретные домены
+
+
+@flask_app.before_request
+def check_websocket():
+    """Проверяем, является ли запрос WebSocket upgrade."""
+    # Сохраняем информацию о WebSocket запросе для использования в after_request
+    g.is_websocket = (
+        request.headers.get("Upgrade", "").lower() == "websocket"
+        or request.headers.get("Connection", "").lower() == "upgrade"
+    )
+
+
 @flask_app.after_request
 def set_security_headers(response):
     """Установка security headers для защиты от различных атак."""
+    # Не применяем security headers к WebSocket upgrade запросам
+    # WebSocket требует специальной обработки и не должен иметь эти заголовки
+    if getattr(g, "is_websocket", False):
+        return response
+
     # Защита от XSS атак
     response.headers["X-Content-Type-Options"] = "nosniff"
     # Защита от clickjacking
@@ -21,21 +38,21 @@ def set_security_headers(response):
     # Это важно для мобильных устройств, которые могут подключаться по HTTP
     # В production с HTTPS раскомментируйте следующую строку:
     # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    
+
     # Content Security Policy
     # Разрешаем доступ к ресурсам для карт (Mapbox, OpenStreetMap, Plotly)
-    # Добавлена поддержка WebSocket для Dash (ws:// и wss:// для того же origin)
+    # Добавлена поддержка WebSocket для Dash
     # Добавлена поддержка для мобильных браузеров
-    # Для WebSocket: разрешаем ws:// и wss:// для того же хоста (Dash использует WebSocket для обновлений)
+    # Явно указываем ws:// и wss:// для того же origin (некоторые браузеры требуют этого)
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly https://api.mapbox.com; "
         "style-src 'self' 'unsafe-inline' https://api.mapbox.com; "
         "img-src 'self' data: https: http: https://*.tile.openstreetmap.org https://api.mapbox.com; "
         "font-src 'self' data: https://cdn.plot.ly; "
-        # WebSocket поддержка для Dash: разрешаем ws:// и wss:// для того же origin
+        # Явно разрешаем WebSocket для того же origin (ws:// и wss://)
         # Также разрешаем HTTP/HTTPS для внешних ресурсов карт
-        "connect-src 'self' ws: wss: http: https: https://api.mapbox.com https://*.tile.openstreetmap.org https://cdn.plot.ly; "
+        "connect-src 'self' ws://* wss://* http: https: https://api.mapbox.com https://*.tile.openstreetmap.org https://cdn.plot.ly; "
         "worker-src 'self' blob:; "
         # Разрешаем frame для мобильных устройств
         "frame-ancestors 'self';"
@@ -43,6 +60,7 @@ def set_security_headers(response):
     # Referrer Policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
+
 
 app = Dash(
     __name__,
