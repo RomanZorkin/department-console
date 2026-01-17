@@ -28,7 +28,11 @@ COPY . .
 RUN uv sync --frozen --no-dev
 
 # Создание непривилегированного пользователя для запуска приложения
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd -r appuser && useradd -r -g appuser -m appuser
+
+# Создание директории кэша для uv с правильными правами
+RUN mkdir -p /home/appuser/.cache/uv /app/.cache/uv && \
+    chown -R appuser:appuser /home/appuser /app/.cache
 
 # Изменение владельца файлов приложения
 RUN chown -R appuser:appuser /app
@@ -42,6 +46,7 @@ ENV UVICORN_PORT=8000
 ENV UVICORN_WORKERS=1
 ENV UVICORN_RELOAD=false
 ENV PATH="/app/.venv/bin:$PATH"
+ENV UV_CACHE_DIR=/app/.cache/uv
 
 # Переключение на непривилегированного пользователя
 USER appuser
