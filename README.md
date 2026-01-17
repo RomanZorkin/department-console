@@ -122,6 +122,51 @@
 ```
 
 
+## Быстрый деплой на удаленный сервер
+
+Пошаговые команды для деплоя на удаленный сервер через SSH.
+
+### Подключение и подготовка
+
+```bash
+# 1. Подключение к серверу
+ssh user@your-server-ip -p <port number>
+
+# 2. Создание каталога проекта
+mkdir -p /opt/dashbord
+cd /opt/dashbord
+
+# 3. Клонирование репозитория
+git clone https://TOKEN@github.com/RomanZorkin/department-console.git .
+```
+
+### Запуск сервиса
+
+```bash
+# Сборка и запуск в фоновом режиме
+docker compose build
+
+# Проверка статуса
+docker compose up -d
+
+# Просмотр логов
+docker compose logs -f
+```
+
+### Проверка работы
+
+```bash
+# Проверка доступности локально
+curl http://localhost:8000
+
+# Проверка статуса контейнера
+docker compose ps
+
+# Проверка логов на ошибки
+docker compose logs | tail -50
+```
+
+
 ## Запуск приложения
 
 Ниже предполагается, что у вас установлен Python 3.11+ и инструмент [uv](https://github.com/astral-sh/uv) (если проект на нём). Если вы используете `pip`, шаги по установке пакетов будут немного отличаться.
@@ -453,52 +498,6 @@ docker-compose up -d
 # Проверить статус healthcheck
 docker inspect dashbord-app | grep -A 10 Health
 ```
-
-
-## Быстрый деплой на удаленный сервер
-
-Пошаговые команды для деплоя на удаленный сервер через SSH.
-
-### Подключение и подготовка
-
-```bash
-# 1. Подключение к серверу
-ssh user@your-server-ip -p <port number>
-
-# 2. Создание каталога проекта
-mkdir -p /opt/dashbord
-cd /opt/dashbord
-
-# 3. Клонирование репозитория
-git clone https://TOKEN@github.com/RomanZorkin/department-console.git .
-```
-
-### Запуск сервиса
-
-```bash
-# Сборка и запуск в фоновом режиме
-docker compose build
-
-# Проверка статуса
-docker compose up -d
-
-# Просмотр логов
-docker compose logs -f
-```
-
-### Проверка работы
-
-```bash
-# Проверка доступности локально
-curl http://localhost:8000
-
-# Проверка статуса контейнера
-docker compose ps
-
-# Проверка логов на ошибки
-docker compose logs | tail -50
-```
-
 
 
 ## Тестирование
