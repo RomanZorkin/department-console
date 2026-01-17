@@ -270,13 +270,24 @@ CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", 
   - `X-Content-Type-Options: nosniff` - защита от MIME type sniffing
   - `X-Frame-Options: SAMEORIGIN` - защита от clickjacking
   - `X-XSS-Protection: 1; mode=block` - защита от XSS
-  - `Strict-Transport-Security` - принудительное использование HTTPS
-  - `Content-Security-Policy` - политика безопасности контента
+  - `Strict-Transport-Security` - принудительное использование HTTPS (отключен для HTTP, чтобы не блокировать мобильные устройства)
+  - `Content-Security-Policy` - политика безопасности контента с поддержкой:
+    - WebSocket (ws:// и wss://) для Dash обновлений в реальном времени
+    - HTTP/HTTPS для внешних ресурсов карт
+    - Поддержка мобильных браузеров
   - `Referrer-Policy` - политика referrer
 
 ### 7. .env.example файл
 - Создан файл `.env.example` с примерами переменных окружения
 - Документированы все настройки uvicorn сервера
+
+### 8. Исправления для мобильных устройств (`app/app.py`)
+- **Проблема:** Строгие настройки Content-Security-Policy блокировали WebSocket соединения, необходимые для работы Dash на мобильных устройствах
+- **Решение:**
+  - Добавлена поддержка WebSocket (ws:// и wss://) в CSP для Dash обновлений в реальном времени
+  - Отключен Strict-Transport-Security для HTTP соединений (чтобы не блокировать мобильные устройства, подключающиеся по HTTP)
+  - Добавлена поддержка HTTP/HTTPS для внешних ресурсов карт
+  - Добавлена директива `frame-ancestors` для поддержки мобильных браузеров
 
 ## Заключение
 
@@ -288,6 +299,7 @@ CMD ["uv", "run", "uvicorn", "app.app:asgi_app", "--host", "0.0.0.0", "--port", 
 - ✅ Добавлено логирование безопасности
 - ✅ Добавлены security headers
 - ✅ Создан .env.example файл
+- ✅ Исправлены проблемы с мобильными устройствами (WebSocket поддержка, CSP настройки)
 
 Рекомендуется также реализовать:
 - Rate limiting (через nginx или uvicorn middleware)

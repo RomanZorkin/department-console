@@ -17,18 +17,28 @@ def set_security_headers(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     # Защита от MIME type sniffing
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    # Strict Transport Security (для HTTPS)
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # Strict Transport Security (только для HTTPS, не устанавливаем для HTTP)
+    # Это важно для мобильных устройств, которые могут подключаться по HTTP
+    # В production с HTTPS раскомментируйте следующую строку:
+    # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
     # Content Security Policy
     # Разрешаем доступ к ресурсам для карт (Mapbox, OpenStreetMap, Plotly)
+    # Добавлена поддержка WebSocket для Dash (ws:// и wss:// для того же origin)
+    # Добавлена поддержка для мобильных браузеров
+    # Для WebSocket: разрешаем ws:// и wss:// для того же хоста (Dash использует WebSocket для обновлений)
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly https://api.mapbox.com; "
         "style-src 'self' 'unsafe-inline' https://api.mapbox.com; "
-        "img-src 'self' data: https: https://*.tile.openstreetmap.org https://api.mapbox.com; "
+        "img-src 'self' data: https: http: https://*.tile.openstreetmap.org https://api.mapbox.com; "
         "font-src 'self' data: https://cdn.plot.ly; "
-        "connect-src 'self' https://api.mapbox.com https://*.tile.openstreetmap.org https://cdn.plot.ly; "
-        "worker-src 'self' blob:;"
+        # WebSocket поддержка для Dash: разрешаем ws:// и wss:// для того же origin
+        # Также разрешаем HTTP/HTTPS для внешних ресурсов карт
+        "connect-src 'self' ws: wss: http: https: https://api.mapbox.com https://*.tile.openstreetmap.org https://cdn.plot.ly; "
+        "worker-src 'self' blob:; "
+        # Разрешаем frame для мобильных устройств
+        "frame-ancestors 'self';"
     )
     # Referrer Policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
